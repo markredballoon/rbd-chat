@@ -1,41 +1,274 @@
 <!doctype html>
 <html>
-  <head>
+
+<head>
     <title>Socket.IO chat</title>
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; }
-      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html{
+            height: 100%;
+        }
+        body {
+            font: 16px Helvetica, Arial, sans-serif;
+            height:100%;
+            line-height: 1;
+        }
+        
+        form {
+            background: rgba( 255, 255, 255, 0.64 );
+            padding: 3px;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        form input {
+            border: 0;
+            padding: 10px;
+            width: 90%;
+            margin-right: .5%;
+        }
+        
+        form button {
+            width: 9%;
+            background: rgb(190, 24, 25);
+            border: none;
+            padding: 10px;
+            color: #fff;
+            font-weight: 700;
+            outline: none;
+        }
+        form button:active {
+            background: rgb(165, 14, 15);
+        }
+
+        form input:focus,
+        form button:focus{
+            outline: 1px dashed rgba( 12 , 12, 12, 0.4);
+        }
+        
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 1rem;
+        }
+        
+        #messages li .title{
+            background: #eee;
+            color: #333;
+            font-size: 0.6em;
+            padding: 2px 10px;
+        }
+        #messages li .content{
+            padding: 5px 10px;
+        }
+
+        .background{
+            background-image: url(http://redballoon.io/images/rbd_big_red_bg.jpg);
+            background-position: center;
+            background-size: cover;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+        }
+        .container{
+            width: 100%;
+            max-width: 1100px;
+            padding: 0 1rem;
+            margin: auto;
+            height: 100%;
+            position: relative;
+        }
+        header{
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45px;
+            background: #333;
+            z-index: 2;
+            color: #fefefe;
+        }
+        header h1{
+            font-size: 30px;
+            line-height: 45px;
+            float: right;
+        }
+        header svg{
+            height: 25px;
+            margin-top: 10px;
+            width: auto;
+        }
+        main{
+            z-index: 1;
+            height: 100%;
+            position: relative;
+        }
+        h3{
+            background: #fff;
+            border-bottom: 5px solid rgb(190, 24, 25);
+            color: #333;
+            font-weight: 500;
+            font-size: 22px;
+            line-height: 30px;
+            text-align: center; 
+            flex: 0 0 auto;
+            padding: 5px 0;
+        }
+        .wrap{
+            position: absolute;
+            left: 1rem;
+            right: 1rem;
+            top: calc(45px + 3%);
+            bottom: 5%;
+            display: flex;
+            align-items: stretch;
+            justify-content: flex-end;
+            box-shadow: 2px 1px 2px 1px rgba(100, 100, 100, 0.3);
+        }
+
+        .roomlist{
+            flex: 0 1 33%;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+        }
+        .roomlist ul{
+            flex: 1 1 auto;
+            list-style-type: none;
+            background: rgba(255, 255, 255, 0.23 );
+            padding: 12px 0;
+        }
+        .roomlist li{
+            display: block;
+            margin-bottom: 8px;
+            padding-right: 1rem;
+        }
+        .roomlist li button{
+            display: block;
+            width: 100%;
+            padding: 16px 10px;
+            background: rgba(255,255,255,0.8);
+            outline: none;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            border-left: 5px solid rgb(190, 24, 25);
+        }
+        .roomlist li.current{
+            pointer-events: none;
+            padding-right: 0;
+        }
+        .roomlist li.current button,
+        .roomlist li.current button:hover,
+        .roomlist li.current button:focus{
+            border-right: 1rem solid rgb(190, 24, 25);
+            box-shadow: none;
+            background: rgba(255,255,255,1);
+        }
+        .roomlist li button:hover,
+        .roomlist li button:focus{
+            background: rgba(255,255,255, 0.9);
+            box-shadow: 0 0 3px 2px rgba(0,0,0,0.2) inset;
+        }
+        .roomlist li button:active{
+            box-shadow: 0 0 3px 2px rgba(0,0,0,0.45) inset;
+        }
+        .chat{
+            font-size: 1.4rem;
+            display: flex;
+            flex: 1 1 66%;
+            flex-direction: column;
+        }
+
+        .chat ul{
+            background: rgba( 255, 255, 255, 1 );
+            flex: 1 1 auto;
+            overflow-y: auto;
+        } 
+        .chat form{
+            flex: 0 1 auto;
+        }
+        
     </style>
-  </head>
-  <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="187px" height="25px" viewBox="0 0 187 25" preserveAspectRatio="xMinYMid meet" version="1.1"><g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"><path d="M12.9347221,14.1201144 C14.7128106,13.5622827 17.6414269,11.7841943 17.6414269,7.21694738 C17.6414269,4.81129825 16.5954925,2.89375185 14.9917264,1.70835952 C13.4228248,0.557831681 11.330956,0 8.64639106,0 L0,0 L0,24.0564913 L5.64804577,24.0564913 L5.64804577,14.8522685 L7.42613426,14.8522685 L12.4814839,24.0564913 L19.0360061,24.0564913 L12.9347221,14.1201144 Z M11.9585167,7.42613426 C11.9585167,8.68125554 11.4704139,9.34368066 10.7382599,9.86664786 C10.0409703,10.3896151 9.13449378,10.529073 7.84450802,10.529073 L5.61318129,10.529073 L5.61318129,4.35806001 L7.84450802,4.35806001 C9.13449378,4.35806001 10.0409703,4.46265345 10.7382599,4.98562065 C11.4704139,5.50858785 11.9585167,6.20587745 11.9585167,7.42613426 Z M37.4444516,14.956862 C37.4444516,9.93637682 33.9231391,6.55452225 28.832925,6.55452225 C23.7427109,6.55452225 19.5589733,9.7969189 19.5589733,15.4798292 C19.5589733,21.1627394 23.4289306,24.4400005 28.7283316,24.4400005 C34.062597,24.4400005 36.3287882,22.0692159 36.8866199,21.6508421 L34.6901577,18.7570903 C33.7139522,19.4195154 31.7615414,20.3957208 29.5302146,20.3957208 C27.2640234,20.3957208 25.3813415,19.2800575 25.1372901,16.8046794 L37.3747226,16.8046794 C37.3747226,16.8046794 37.4444516,15.7936095 37.4444516,14.956862 Z M25.1721546,13.6320117 C25.2418836,11.9933811 26.4272759,10.1804282 28.7283316,10.1804282 C31.0642517,10.1804282 32.2147796,12.0631101 32.2496441,13.6320117 L25.1721546,13.6320117 Z M58.1539528,0 L52.575636,0 L52.575636,8.96017138 C52.0178043,8.12342386 50.2745803,6.55452225 47.1367771,6.55452225 C42.1511564,6.55452225 39.0133532,10.4244795 39.0133532,15.4798292 C39.0133532,20.5351788 42.1511564,24.4400005 47.1367771,24.4400005 C49.4378327,24.4400005 51.4948371,23.5683885 52.7848228,21.8251645 L52.8894163,21.7903 L52.8545518,24.0564913 L58.1539528,24.0564913 L58.1539528,0 Z M52.7499584,15.4101002 C52.7499584,18.0598007 51.1461923,19.8727536 48.7405431,19.8727536 C46.334894,19.8727536 44.6962635,18.0598007 44.6962635,15.4101002 C44.6962635,12.7603997 46.334894,10.9474467 48.7405431,10.9474467 C51.1461923,10.9474467 52.7499584,12.7603997 52.7499584,15.4101002 Z M87.8584898,17.1533242 C87.8584898,14.1898434 85.8712144,12.1677035 82.8728691,11.4355495 L82.8728691,11.3658205 C84.6858221,10.7382599 86.3941816,8.71612002 86.3941816,6.06641953 C86.3941816,3.41671905 84.9298735,1.84781744 83.3261074,1.01106992 C81.7223413,0.1743224 79.595608,0 77.3991458,0 L69.205993,0 L69.205993,24.0564913 L79.0377763,24.0564913 C81.5131544,24.0564913 83.6747522,23.603253 85.2087893,22.4875896 C86.7428264,21.3719263 87.8584898,19.8030247 87.8584898,17.1533242 Z M80.8507293,6.90316706 C80.8507293,8.08855938 80.3626266,8.71612002 79.665337,9.20422274 C79.0029119,9.65746098 78.2707578,9.72718994 77.0156365,9.72718994 L74.8191742,9.72718994 L74.8191742,4.18373761 L77.1550944,4.18373761 C78.3753512,4.18373761 79.0029119,4.25346657 79.665337,4.67184033 C80.3626266,5.09021409 80.8507293,5.75263921 80.8507293,6.90316706 Z M82.1407151,16.700086 C82.1407151,17.7460204 81.7572058,18.5479034 80.9204583,19.1057351 C80.0837107,19.6984312 79.1423698,19.7681602 77.922113,19.7681602 L74.8191742,19.7681602 L74.8191742,13.6320117 L77.922113,13.6320117 C79.1423698,13.6320117 80.0837107,13.7017407 80.9204583,14.2944368 C81.7572058,14.887133 82.1407151,15.6192871 82.1407151,16.700086 Z M105.988019,14.3641658 C105.988019,11.4704139 105.255865,9.7969189 103.931015,8.54179762 C102.5713,7.28667634 100.723483,6.55452225 97.5159508,6.55452225 C94.3084186,6.55452225 91.6238536,7.56559218 90.1595455,8.29774626 L91.6238536,11.9236522 C92.4954656,11.3658205 94.6919279,10.3896151 96.8883901,10.3896151 C99.1197169,10.3896151 100.409703,11.330956 100.409703,13.143909 L100.409703,13.5274183 L96.0865071,13.7017407 C92.9138394,13.8411986 89.3925269,15.1311844 89.3925269,18.9662772 C89.3925269,22.80137 92.6000591,24.4400005 95.6332689,24.4400005 C98.4224273,24.4400005 99.8170065,22.9756924 100.549161,22.2435383 L100.653754,24.0564913 L105.988019,24.0564913 L105.988019,14.3641658 Z M100.444567,19.314922 C100.095922,19.9076181 99.0848524,20.8838236 97.5856797,20.8838236 C96.0516426,20.8838236 94.9708437,20.0819405 94.9708437,18.7570903 C94.9708437,17.4671045 95.9819137,16.7349504 97.6902732,16.6652215 L100.444567,16.4908991 L100.444567,19.314922 Z M115.157378,0 L109.579061,0 L109.579061,24.0564913 L115.157378,24.0564913 L115.157378,0 Z M124.675381,0 L119.097064,0 L119.097064,24.0564913 L124.675381,24.0564913 L124.675381,0 Z M146.53541,15.5146936 C146.53541,9.9712413 142.456266,6.55452225 137.017407,6.55452225 C131.578548,6.55452225 127.464539,9.9712413 127.464539,15.5146936 C127.464539,21.058146 131.578548,24.4400005 137.017407,24.4400005 C142.456266,24.4400005 146.53541,21.058146 146.53541,15.5146936 Z M140.922228,15.4101002 C140.922228,17.9552072 139.45792,19.8727536 137.017407,19.8727536 C134.542029,19.8727536 133.112585,17.9552072 133.112585,15.4101002 C133.112585,12.8649931 134.542029,10.9474467 137.017407,10.9474467 C139.45792,10.9474467 140.922228,12.8649931 140.922228,15.4101002 Z M167.31464,15.5146936 C167.31464,9.9712413 163.235496,6.55452225 157.796637,6.55452225 C152.357778,6.55452225 148.243769,9.9712413 148.243769,15.5146936 C148.243769,21.058146 152.357778,24.4400005 157.796637,24.4400005 C163.235496,24.4400005 167.31464,21.058146 167.31464,15.5146936 Z M161.701459,15.4101002 C161.701459,17.9552072 160.23715,19.8727536 157.796637,19.8727536 C155.321259,19.8727536 153.891815,17.9552072 153.891815,15.4101002 C153.891815,12.8649931 155.321259,10.9474467 157.796637,10.9474467 C160.23715,10.9474467 161.701459,12.8649931 161.701459,15.4101002 Z M186.908478,13.9109276 C186.908478,9.76205442 185.618492,6.55452225 180.632871,6.55452225 C178.157493,6.55452225 176.588592,7.80964354 175.647251,9.34368066 L175.577522,9.34368066 L175.612386,6.86830258 L170.034069,6.86830258 L170.034069,24.0564913 L175.612386,24.0564913 L175.612386,15.5495581 C175.612386,13.07418 176.274811,11.1217691 178.68046,11.1217691 C180.981516,11.1217691 181.330161,12.8301287 181.330161,15.0963199 L181.330161,24.0564913 L186.908478,24.0564913 L186.908478,13.9109276 Z" id="Red-Balloon-Logo" fill="#fff"></path></g></svg>
+            <h1>RBD Chat</h1>
+        </div>
+    </header>
+    <main>
+        <div class="background" role="presentation"></div>
+        <div class="container">
+            <div class="wrap">
+                <div class="roomlist">
+                    <h3>Room list</h3>
+                    <ul id="rooms">
+                        <li data-room-id="0" class="current">
+                            <button>Chat room 0</button>
+                        </li>
+                        <li data-room-id="1">
+                            <button>Chat room 1</button>
+                        </li>
+                        <li data-room-id="2">
+                            <button>Chat room 2</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="chat">
+                    <h3>Room 0</h3>
+                    <ul id="messages"></ul>
+                    <form action="">
+                        <input id="m" autocomplete="off" /><button>Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
     <script src="/socket.io-1.3.7.js"></script>
     <script src="/jquery-1.11.1.js"></script>
     <script>
-      var socket = io();
+        var socket = io();
+        var $messages = $('#messages');
+        var $rooms = $('#rooms');
 
-      $('form').submit(function(){
-        socket.emit('chat message with ack', $('#m').val(), function(data){
-          $('#messages').append($('<li>').text('ACK CALLBACK: ' + data));
+        $rooms.on('click', 'button', function(event){
+            var $listItem = $(this).closest("li");
+            $rooms.find('li').removeClass('current');
+            $listItem.addClass('current');
         });
-        socket.emit('chat message', $('#m').val());
-        $('#m').val('');
-        return false;
-      });
 
-      socket.on('chat message', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
-      
+        $('form').submit(function () {
+            socket.emit('chat message with ack', $('#m').val(), function (data) {
+                console.log(data)
+                //$('#messages').append($('<li>').text('ACK CALLBACK: ' + data));
+            });
+            socket.emit('chat message', $('#m').val());
+            $('#m').val('');
+            return false;
+        });
+
+        socket.on('chat message', function (msg) {
+            console.log(msg)
+            var msgDecode = JSON.parse(msg);
+            $messages.append($('<li>').html('<div class="title">' + msgDecode.title + '</div><div class="content">' + msgDecode.content + '</div>'));
+            window.requestAnimationFrame(function(){
+                 $messages.stop().animate({"scrollTop":  $messages[0].scrollHeight + "px"}, 250);
+            })
+        });
+
     </script>
-  </body>
+</body>
+
 </html>
