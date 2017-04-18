@@ -4,7 +4,7 @@ Chat client using a golang socket.io server.
 
 ## To run
 - clone / download this repo
-- run go build server
+- run ```go build server.go```
 - run the server.exe file
 
 ## To do:
